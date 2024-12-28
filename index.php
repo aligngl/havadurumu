@@ -6,11 +6,20 @@
     <title>Hava Durumu Panosu</title>
     <style>
         :root {
-            --primary-color:rgb(125, 62, 46);
+            --primary-color: #2e7d32;
             --secondary-color: #a5d6a7;
             --background-color: #f1f8e9;
             --text-color: #1b5e20;
             --card-background: #ffffff;
+            --header-color: #7d3e2e;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #42a849;
+            --secondary-color: #4caf50;
+            --background-color: #263238;
+            --text-color: #ffffff;
+            --card-background: #37474f;
         }
 
         body {
@@ -22,10 +31,12 @@
         }
 
         header {
-            background: var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--header-color);
             color: white;
             padding: 1rem 1.5rem;
-            text-align: center;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             border-radius: 0 0 10px 10px;
         }
@@ -35,9 +46,23 @@
             margin: 0;
         }
 
-        header h2 {
-            font-size: 1.2rem;
-            margin-top: 0.5rem;
+        .location {
+            font-size: 1rem;
+            margin-left: 1rem;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--secondary-color);
         }
 
         .container {
@@ -82,7 +107,7 @@
         }
 
         footer {
-            background: var(--primary-color);
+            background: var(--header-color);
             color: white;
             text-align: center;
             padding: 1rem;
@@ -101,7 +126,10 @@
 <body>
     <header>
         <h1>Hava Durumu Panosu</h1>
-        <h2 id="location"></h2>
+        <div class="controls">
+        <div class="location" id="header-location"> Alınıyor...</div>
+            <button class="theme-toggle" id="theme-toggle">☀️</button>
+        </div>
     </header>
     <div class="container">
         <section class="weather-summary" id="weather-summary">
@@ -120,6 +148,15 @@
         &copy; 2024 Powered by AGLSOFT
     </footer>
     <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const headerLocation = document.getElementById('header-location');
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.body.dataset.theme === 'dark';
+            document.body.dataset.theme = isDark ? '' : 'dark';
+            themeToggle.textContent = isDark ? '☀️' : '🌙';
+        });
+
         async function fetchWeatherData(lat, lon) {
             try {
                 const openMeteoResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&current_weather=true&timezone=Europe/Istanbul`);
@@ -173,11 +210,11 @@
             const absHumidity = calculateAbsoluteHumidity(currentWeather.humidity, today.temperature);
             const pressureType = currentWeather.pressure_mb > 1013 ? 'Yüksek Basınç' : 'Alçak Basınç';
 
+            headerLocation.textContent = ` ${lat.toFixed(2)}, ${lon.toFixed(2)}`;
             document.getElementById('temperature').innerHTML = `Sıcaklık: ${today.temperature}&deg;C`;
             document.getElementById('humidity').innerHTML = `Nem: ${currentWeather.humidity}%<br>Mutlak Nem: ${absHumidity} g/m³`;
             document.getElementById('pressure').innerHTML = `Basınç: ${currentWeather.pressure_mb} hPa (${pressureType})`;
             document.getElementById('wind').innerHTML = `Rüzgar: ${today.windspeed} km/sa, Yön: ${today.winddirection}&deg;`;
-            document.getElementById('coordinates').innerHTML = `Koordinatlar: Enlem ${lat}, Boylam ${lon}`;
         }
 
         async function displayLocationName(lat, lon) {
@@ -189,11 +226,11 @@
                 const locationData = await response.json();
                 if (locationData && locationData.address) {
                     const locationName = `${locationData.address.city || locationData.address.town || locationData.address.village}, ${locationData.address.country}`;
-                    document.getElementById('location').textContent = `Konum: ${locationName}`;
+                    headerLocation.textContent = ` ${locationName}`;
                 }
             } catch (error) {
                 console.error("Konum bilgisi alınamadı:", error);
-                document.getElementById('location').textContent = 'Konum: Bilgi alınamadı';
+                headerLocation.textContent = 'Konum: Bilgi alınamadı';
             }
         }
 
